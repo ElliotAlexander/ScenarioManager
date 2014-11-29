@@ -1,6 +1,0 @@
-name: ScenarioManager
-version: 1.0
-main: uk.co.ElllzUHC.Scenarios.Scenario
-commands:
-    scenario:
-        usage: /scenario list/toggle
