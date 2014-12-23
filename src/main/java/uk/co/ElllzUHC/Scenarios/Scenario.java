@@ -21,6 +21,8 @@ public class Scenario extends JavaPlugin implements Listener {
     private final String prefix = ChatColor.GRAY + "["  + ChatColor.AQUA + "Scenarios" + ChatColor.GRAY + "]";
 
 
+    private ArrayList<String> notLoadedScenarios = new ArrayList<String>();
+
     private Logger logger;
 
     public void onEnable(){
@@ -38,8 +40,14 @@ public class Scenario extends JavaPlugin implements Listener {
                 break;
             }
         }
-        scenarioList.add(scenario);
 
+        if(scenario.getScenarioName().contains(" ")){
+            logger.log(Level.SEVERE, "Scenario " + scenario.getScenarioName() + " Contains whitespace in name! This is not supported. Ignoring.");
+            notLoadedScenarios.add(scenario.getScenarioName());
+            return;
+        }
+
+        scenarioList.add(scenario);
         logger.info("Loading plugin " + scenario.getScenarioName() );
 
         getServer().getPluginManager().registerEvents(scenario, this);
@@ -51,28 +59,51 @@ public class Scenario extends JavaPlugin implements Listener {
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args){
         if(cmd.getName().equalsIgnoreCase("scenario")){
             if (args.length == 0) {
-                sender.sendMessage(ChatColor.GRAY + "Enabled Scenarios:");
+                sender.sendMessage(ChatColor.AQUA + "----------------------------");
+                sender.sendMessage(ChatColor.GOLD + "Enabled Scenarios:");
                 for (ScenarioInterface scenario : scenarioList) {
-                    sender.sendMessage(ChatColor.AQUA + scenario.getScenarioName() + ChatColor.GRAY + " [" + ChatColor.RED + checkScenarioState(scenario) + ChatColor.GRAY + "] : " + scenario.getScenarioDescription());
+                    sender.sendMessage(" - " + ChatColor.AQUA + scenario.getScenarioName() + ChatColor.GRAY + " [" + ChatColor.RED + checkScenarioState(scenario) + ChatColor.GRAY + "] : " + scenario.getScenarioDescription());
                 }
+
+                if(notLoadedScenarios.size()>0){
+                    sender.sendMessage(ChatColor.GOLD + "Scenarios ignored due to loading errors:");
+                    for(String s : notLoadedScenarios){
+                        sender.sendMessage(" - " + ChatColor.AQUA + s);
+                    }
+                }
+
+                sender.sendMessage(ChatColor.AQUA + "----------------------------");
             } else if (args[0].equalsIgnoreCase("list")) {
-                sender.sendMessage(ChatColor.GRAY + "Enabled Scenarios:");
+                sender.sendMessage(ChatColor.AQUA + "----------------------------");
+                sender.sendMessage(ChatColor.GOLD + "Enabled Scenarios:");
                 for (ScenarioInterface scenario : scenarioList) {
-                    sender.sendMessage(ChatColor.AQUA + scenario.getScenarioName() + ChatColor.GRAY + " [" + ChatColor.RED + checkScenarioState(scenario) + ChatColor.GRAY + "] : " + scenario.getScenarioDescription());
+                    sender.sendMessage(" - " + ChatColor.AQUA + scenario.getScenarioName() + ChatColor.GRAY + " [" + ChatColor.RED + checkScenarioState(scenario) + ChatColor.GRAY + "] : " + scenario.getScenarioDescription());
                 }
+
+                if(notLoadedScenarios.size()>0){
+                    sender.sendMessage(ChatColor.GOLD + "Scenarios ignored due to loading errors:");
+                    for(String s : notLoadedScenarios){
+                        sender.sendMessage(" - " + ChatColor.AQUA + s);
+                    }
+                }
+                sender.sendMessage(ChatColor.AQUA + "----------------------------");
             } else if (args[0].equalsIgnoreCase("toggle")) {
-                if (args.length != 2) {
+                if (args.length != 2&&sender.hasPermission("Scenario.Toggle")) {
                     sender.sendMessage(ChatColor.RED + "Invalid arguments!");
                     return true;
                 }
+
                 for (ScenarioInterface scenario : scenarioList) {
+
                     if (scenario.getScenarioName().equalsIgnoreCase(args[1])) {
+
+
                         if(scenario.getScenarioState()){
                             scenario.setScenarioState(false);
-                            Bukkit.broadcastMessage(prefix + scenario.getScenarioName() + " has been disabled!");
+                            Bukkit.broadcastMessage(prefix + " " + scenario.getScenarioName() + " has been disabled!");
                         } else {
                             scenario.setScenarioState(true);
-                            Bukkit.broadcastMessage(prefix + scenario.getScenarioName() + " has been enabled!");
+                            Bukkit.broadcastMessage(prefix + " " + scenario.getScenarioName() + " has been enabled!");
                         }
                         return true;
                     }
@@ -96,13 +127,11 @@ public class Scenario extends JavaPlugin implements Listener {
      * @return
      */
 
-    public String checkScenarioState(ScenarioInterface scenario){
-        if(scenario.getScenarioState()){
+    public String checkScenarioState(ScenarioInterface scenario) {
+        if (scenario.getScenarioState()) {
             return ChatColor.GREEN + "ON";
         } else {
             return ChatColor.RED + "OFF";
         }
     }
-
-
 }
